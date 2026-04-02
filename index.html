@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shipment Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #eef3f9;
+      --surface:      #ffffff;
+      --surface2:     #f4f8fd;
+      --blue-50:      #e8f1fb;
+      --blue-100:     #c8ddf5;
+      --blue-400:     #5b9bd5;
+      --blue-500:     #3a82c4;
+      --blue-600:     #2568a8;
+      --green-50:     #e8f5ee;
+      --green-500:    #2e9e5b;
+      --amber-50:     #fef7e8;
+      --amber-500:    #d48e14;
+      --purple-50:    #f0ecfb;
+      --purple-500:   #7c5cbf;
+      --red-50:       #fdeaea;
+      --red-500:      #c0392b;
+      --grey-100:     #e9ecf0;
+      --grey-200:     #d2d8e0;
+      --grey-400:     #8e9aaa;
+      --grey-600:     #4f5b6b;
+      --grey-800:     #1e2a38;
+      --text:         #1e2a38;
+      --text-muted:   #6b7990;
+      --border:       #d5dde8;
+      --shadow-sm:    0 2px 8px rgba(30,42,56,0.07);
+      --shadow-md:    0 6px 24px rgba(30,42,56,0.10);
+      --radius-sm:    8px;
+      --radius-md:    12px;
+      --radius-lg:    18px;
+      --radius-xl:    24px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 24px 60px;
+    }
+
+    .container { max-width: 1500px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 32px; }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      color: var(--blue-600);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 99px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 600;
+      color: var(--grey-800);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    h1 span { color: var(--blue-500); }
+
+    .header-sub {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: box-shadow .18s, transform .18s;
+    }
+
+    .kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+    .kpi-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .kpi-icon.blue   { background: var(--blue-50); }
+    .kpi-icon.green  { background: var(--green-50); }
+    .kpi-icon.amber  { background: var(--amber-50); }
+    .kpi-icon.purple { background: var(--purple-50); }
+    .kpi-icon.red    { background: var(--red-50); }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .kpi-value {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--grey-800);
+      letter-spacing: -0.02em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Filter Card ── */
+    .filter-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 28px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .filter-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--grey-100);
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .filter-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .filter-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-group.span2 { grid-column: span 2; }
+
+    .filter-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .filter-group input,
+    .filter-group select {
+      height: 42px;
+      padding: 0 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .18s, box-shadow .18s, background .18s;
+      width: 100%;
+    }
+
+    .filter-group input::placeholder { color: var(--grey-400); }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      border-color: var(--blue-400);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(91,155,213,0.15);
+    }
+
+    .filter-group input[type="date"] { font-size: 13px; cursor: pointer; }
+
+    .date-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .filter-divider { height: 1px; background: var(--grey-100); margin: 18px 0; }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 44px;
+      padding: 0 22px;
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all .18s;
+    }
+
+    .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue-500), var(--blue-600));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37,104,168,0.3);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(37,104,168,0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--grey-600);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-ghost:hover { background: var(--grey-100); color: var(--grey-800); }
+
+    .btn-green {
+      background: linear-gradient(135deg, #34a76a, var(--green-500));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(46,158,91,0.25);
+    }
+
+    .btn-green:hover { box-shadow: 0 6px 20px rgba(46,158,91,0.35); transform: translateY(-1px); }
+    .btn-green:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+      margin-bottom: 12px;
+      min-height: 28px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--grey-200);
+      flex-shrink: 0;
+    }
+
+    .status-dot.active { background: #3db37a; }
+    .status-dot.error  { background: #e05c5c; }
+
+    .table-actions { display: flex; align-items: center; gap: 10px; }
+
+    /* ── Table Card ── */
+    .table-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1650px;
+    }
+
+    thead tr {
+      background: linear-gradient(180deg, var(--blue-50) 0%, #f0f6fc 100%);
+      border-bottom: 2px solid var(--blue-100);
+    }
+
+    th {
+      padding: 13px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--blue-600);
+      white-space: nowrap;
+      text-align: left;
+      user-select: none;
+    }
+
+    th.sortable {
+      cursor: pointer;
+      transition: background .12s;
+    }
+
+    th.sortable:hover { background: var(--blue-100); }
+
+    th .sort-indicator {
+      display: inline-flex;
+      flex-direction: column;
+      margin-left: 5px;
+      opacity: 0.35;
+      vertical-align: middle;
+      line-height: 1;
+      font-size: 9px;
+    }
+
+    th.sort-asc  .sort-indicator,
+    th.sort-desc .sort-indicator { opacity: 1; color: var(--blue-500); }
+
+    th.num, td.num { text-align: right; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--grey-100);
+      transition: background .12s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--blue-50); }
+
+    td {
+      padding: 11px 14px;
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    td.num {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--grey-600);
+    }
+
+    td.id-cell {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--blue-500);
+      font-weight: 500;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-sea  { background: #dff0fb; color: #1a6fa0; }
+    .badge-air  { background: #e8f5e9; color: #2a7a45; }
+    .badge-road { background: #fff3e0; color: #a0621a; }
+    .badge-def  { background: var(--grey-100); color: var(--grey-600); }
+
+    .cc-code {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--grey-100);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--grey-600);
+    }
+
+    .date-pill {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      color: var(--grey-600);
+    }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 18px;
+      border-top: 1px solid var(--grey-100);
+      flex-wrap: wrap;
+    }
+
+    .page-info {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 0 12px;
+    }
+
+    .page-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--grey-600);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      background: var(--blue-50);
+      border-color: var(--blue-400);
+      color: var(--blue-600);
+    }
+
+    .page-btn.active {
+      background: var(--blue-500);
+      border-color: var(--blue-500);
+      color: #fff;
+    }
+
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Empty / State ── */
+    .state-cell { padding: 60px 24px !important; }
+
+    .state-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .state-icon {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--blue-50);
+    }
+
+    .state-icon svg { width: 24px; height: 24px; color: var(--blue-400); }
+
+    .state-title { font-size: 15px; font-weight: 600; color: var(--grey-600); }
+    .state-sub   { font-size: 13px; color: var(--text-muted); }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .kpi-bar { grid-template-columns: repeat(3, 1fr); }
+      .filter-grid { grid-template-columns: repeat(2, 1fr); }
+      .filter-grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 16px 14px 40px; }
+      .kpi-bar { grid-template-columns: repeat(2, 1fr); }
+      .filter-grid,
+      .filter-grid.cols-3,
+      .filter-grid.cols-2 { grid-template-columns: 1fr; }
+      .filter-group.span2 { grid-column: span 1; }
+      h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
+      Live Dashboard
+    </div>
+    <h1>Shipment <span>Dashboard</span></h1>
+    <p class="header-sub">Real-time shipment tracking powered by Supabase</p>
+  </div>
+
+  <!-- KPI Bar -->
+  <div class="kpi-bar">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">📦</div>
+      <div class="kpi-label">Total Shipments</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+      <div class="kpi-sub">in current results</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green">🚢</div>
+      <div class="kpi-label">Total TEU</div>
+      <div class="kpi-value" id="kpiTeu">—</div>
+      <div class="kpi-sub">twenty-foot equivalent units</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon amber">📐</div>
+      <div class="kpi-label">Total Volume</div>
+      <div class="kpi-value" id="kpiVolume">—</div>
+      <div class="kpi-sub" id="kpiVolumeUnit">cubic units</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple">🌍</div>
+      <div class="kpi-label">Unique Origins</div>
+      <div class="kpi-value" id="kpiOrigins">—</div>
+      <div class="kpi-sub">distinct origin ports</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red">🏗️</div>
+      <div class="kpi-label">Total Containers</div>
+      <div class="kpi-value" id="kpiContainers">—</div>
+      <div class="kpi-sub">across all shipments</div>
+    </div>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="filter-card">
+
+    <div class="filter-section-title">Shipment &amp; Party</div>
+    <div class="filter-grid">
+      <div class="filter-group">
+        <div class="filter-label">Shipment ID</div>
+        <input type="text" id="shipmentId" placeholder="e.g. SHP001" />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Consolid ID</div>
+        <input type="text" id="consolid" placeholder="Consolid ID" />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Consignee</div>
+        <input type="text" id="consignee" placeholder="Receiver name" />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Consignor</div>
+        <input type="text" id="consignor" placeholder="Sender name" />
+      </div>
+    </div>
+
+    <div class="filter-divider"></div>
+    <div class="filter-section-title">Route &amp; Mode</div>
+    <div class="filter-grid">
+      <div class="filter-group">
+        <div class="filter-label">Origin Location</div>
+        <input type="text" id="origin" placeholder="e.g. Shanghai" />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Destination Location</div>
+        <input type="text" id="destination" placeholder="e.g. Mumbai" />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Origin Country Code</div>
+        <input type="text" id="origCountry" placeholder="e.g. CN" maxlength="4" />
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Destination Country Code</div>
+        <input type="text" id="destCountry" placeholder="e.g. IN" maxlength="4" />
+      </div>
+    </div>
+
+    <div class="filter-grid cols-3" style="margin-top:14px;">
+      <div class="filter-group">
+        <div class="filter-label">Transport Mode</div>
+        <select id="transport">
+          <option value="">All Modes</option>
+          <option value="SEA">SEA</option>
+          <option value="AIR">AIR</option>
+          <option value="ROAD">ROAD</option>
+        </select>
+      </div>
+      <div class="filter-group span2">
+        <div class="filter-label">Shipped On Board Date — From → To</div>
+        <div class="date-pair">
+          <input type="date" id="obDateFrom" />
+          <input type="date" id="obDateTo" />
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-divider"></div>
+    <div class="filter-section-title">Date Ranges</div>
+    <div class="filter-grid cols-2">
+      <div class="filter-group">
+        <div class="filter-label">ETD — Estimated Departure (From → To)</div>
+        <div class="date-pair">
+          <input type="date" id="etdFrom" />
+          <input type="date" id="etdTo" />
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">ETA — Estimated Arrival (From → To)</div>
+        <div class="date-pair">
+          <input type="date" id="etaFrom" />
+          <input type="date" id="etaTo" />
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="clearBtn" type="button">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+        Clear
+      </button>
+      <button class="btn btn-primary" id="searchBtn" type="button">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
+        Search
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-text">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusMsg">Ready — apply filters and click Search</span>
+    </div>
+    <div class="table-actions">
+      <button class="btn btn-green" id="exportBtn" type="button" disabled>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v8M5 7l3 3 3-3M3 13h10"/></svg>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable" data-col="shipmentid"       onclick="setSort('shipmentid')">Shipment ID <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="consolid"          onclick="setSort('consolid')">Consolid <span class="sort-indicator">▲▼</span></th>
+            <th>Inco</th>
+            <th class="sortable" data-col="origunloconame"   onclick="setSort('origunloconame')">Origin <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="destunloconame"   onclick="setSort('destunloconame')">Destination <span class="sort-indicator">▲▼</span></th>
+            <th>Orig. Country</th>
+            <th>Dest. Country</th>
+            <th class="sortable" data-col="shipmenttransportmode" onclick="setSort('shipmenttransportmode')">Transport <span class="sort-indicator">▲▼</span></th>
+            <th>Packing</th>
+            <th>Consignor</th>
+            <th>Consignee</th>
+            <th class="sortable" data-col="shipmentetd"      onclick="setSort('shipmentetd')">ETD <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="shipmenteta"      onclick="setSort('shipmenteta')">ETA <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="shippedonboarddate" onclick="setSort('shippedonboarddate')">On Board <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="actualchargeable" onclick="setSort('actualchargeable')">Chargeable <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="actualvolume" onclick="setSort('actualvolume')">Volume <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="containercount" onclick="setSort('containercount')">Containers <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="teusum"       onclick="setSort('teusum')">TEU <span class="sort-indicator">▲▼</span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr>
+            <td colspan="18" class="state-cell">
+              <div class="state-content">
+                <div class="state-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l4 4"/></svg>
+                </div>
+                <div class="state-title">No search yet</div>
+                <div class="state-sub">Apply filters above and click <strong>Search</strong> to load shipments</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none;"></div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  const SUPABASE_URL      = "https://gelhcmequzjvgzczfzxn.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlbGhjbWVxdXpqdmd6Y3pmenhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDI1NTEsImV4cCI6MjA4OTkxODU1MX0.Iz0Yk7Eel_xQbryFL4DyIyVQeodmT_kuDuWcLbK6Q7A";
+
+  const db         = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const TABLE_NAME = "shipments";
+  const PAGE_SIZE  = 50;
+
+  // ── Field map ──────────────────────────────────────────
+  const F = {
+    shipmentId:         "shipmentid",
+    consolid:           "consolid",
+    inco:               "inco",
+    origin:             "origunloconame",
+    destination:        "destunloconame",
+    origCountryCode:    "origcountrycode",
+    destCountryCode:    "destcountrycode",
+    origCountryName:    "origcountryname",
+    destCountryName:    "destcountryname",
+    transport:          "shipmenttransportmode",
+    packingMode:        "packingmode",
+    consignee:          "consigneefullname",
+    consignor:          "consignorfullname",
+    etd:                "shipmentetd",
+    eta:                "shipmenteta",
+    onBoardDate:        "shippedonboarddate",
+    chargeable:         "actualchargeable",
+    chargeableUnits:    "actualchargeableunits",
+    volume:             "actualvolume",
+    volumeUnits:        "unitofvolume",
+    containerCount:     "containercount",
+    teuSum:             "teusum"
+  };
+
+  // ── State ──────────────────────────────────────────────
+  let currentRows  = [];
+  let currentPage  = 0;
+  let totalCount   = 0;
+  let sortCol      = F.shipmentId;
+  let sortAsc      = true;
+
+  // ── Element refs ───────────────────────────────────────
+  const els = {
+    shipmentId:  document.getElementById("shipmentId"),
+    consolid:    document.getElementById("consolid"),
+    origin:      document.getElementById("origin"),
+    destination: document.getElementById("destination"),
+    origCountry: document.getElementById("origCountry"),
+    destCountry: document.getElementById("destCountry"),
+    transport:   document.getElementById("transport"),
+    consignee:   document.getElementById("consignee"),
+    consignor:   document.getElementById("consignor"),
+    obDateFrom:  document.getElementById("obDateFrom"),
+    obDateTo:    document.getElementById("obDateTo"),
+    etdFrom:     document.getElementById("etdFrom"),
+    etdTo:       document.getElementById("etdTo"),
+    etaFrom:     document.getElementById("etaFrom"),
+    etaTo:       document.getElementById("etaTo"),
+    searchBtn:   document.getElementById("searchBtn"),
+    clearBtn:    document.getElementById("clearBtn"),
+    exportBtn:   document.getElementById("exportBtn"),
+    tableBody:   document.getElementById("tableBody"),
+    statusDot:   document.getElementById("statusDot"),
+    statusMsg:   document.getElementById("statusMsg"),
+    pagination:  document.getElementById("pagination"),
+    kpiTotal:    document.getElementById("kpiTotal"),
+    kpiTeu:      document.getElementById("kpiTeu"),
+    kpiVolume:   document.getElementById("kpiVolume"),
+    kpiVolumeUnit: document.getElementById("kpiVolumeUnit"),
+    kpiOrigins:  document.getElementById("kpiOrigins"),
+    kpiContainers: document.getElementById("kpiContainers"),
+  };
+
+  // ── Helpers ────────────────────────────────────────────
+  function esc(v) {
+    return String(v ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;");
+  }
+
+  function fmt(value, unit) {
+    if (value == null || value === "") return "—";
+    const n = Number(value).toLocaleString();
+    return unit ? `${n} ${unit}` : n;
+  }
+
+  function datePill(val) {
+    if (!val) return "—";
+    return `<span class="date-pill">${esc(val)}</span>`;
+  }
+
+  function transportBadge(val) {
+    if (!val) return "—";
+    const v = val.toUpperCase();
+    const cls  = v==="SEA"?"badge-sea":v==="AIR"?"badge-air":v==="ROAD"?"badge-road":"badge-def";
+    const icon = v==="SEA"?"🚢":v==="AIR"?"✈️":v==="ROAD"?"🚛":"📦";
+    return `<span class="badge ${cls}">${icon} ${esc(val)}</span>`;
+  }
+
+  function countryCell(code) {
+    if (!code) return "—";
+    return `<span class="cc-code">${esc(code).toUpperCase()}</span>`;
+  }
+
+  function setStatus(msg, type="idle") {
+    els.statusMsg.textContent = msg;
+    els.statusDot.className = "status-dot" + (type==="ok"?" active":type==="error"?" error":"");
+  }
+
+  // ── Sort header UI ─────────────────────────────────────
+  function updateSortHeaders() {
+    document.querySelectorAll("th.sortable").forEach(th => {
+      th.classList.remove("sort-asc","sort-desc");
+      if (th.dataset.col === sortCol) {
+        th.classList.add(sortAsc ? "sort-asc" : "sort-desc");
+        const ind = th.querySelector(".sort-indicator");
+        if (ind) ind.textContent = sortAsc ? "▲" : "▼";
+      } else {
+        const ind = th.querySelector(".sort-indicator");
+        if (ind) ind.textContent = "▲▼";
+      }
+    });
+  }
+
+  function setSort(col) {
+    if (sortCol === col) sortAsc = !sortAsc;
+    else { sortCol = col; sortAsc = true; }
+    currentPage = 0;
+    updateSortHeaders();
+    loadShipments();
+  }
+
+  // ── KPI update ─────────────────────────────────────────
+  function updateKPIs(rows) {
+    els.kpiTotal.textContent     = rows.length.toLocaleString();
+    const teu  = rows.reduce((s,r) => s + (Number(r[F.teuSum])        || 0), 0);
+    const vol  = rows.reduce((s,r) => s + (Number(r[F.volume])        || 0), 0);
+    const ctr  = rows.reduce((s,r) => s + (Number(r[F.containerCount])|| 0), 0);
+    els.kpiTeu.textContent        = teu.toLocaleString();
+    els.kpiVolume.textContent     = vol.toLocaleString();
+    els.kpiContainers.textContent = ctr.toLocaleString();
+    const units = rows.find(r => r[F.volumeUnits])?.[F.volumeUnits] || "";
+    els.kpiVolumeUnit.textContent = units || "cubic units";
+    const origins = new Set(rows.map(r => r[F.origin]).filter(Boolean));
+    els.kpiOrigins.textContent = origins.size;
+  }
+
+  function resetKPIs() {
+    ["kpiTotal","kpiTeu","kpiVolume","kpiContainers","kpiOrigins"]
+      .forEach(k => { els[k].textContent = "—"; });
+    els.kpiVolumeUnit.textContent = "cubic units";
+  }
+
+  // ── Pagination ─────────────────────────────────────────
+  function renderPagination() {
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    if (totalPages <= 1) { els.pagination.style.display = "none"; return; }
+
+    els.pagination.style.display = "flex";
+    const p = currentPage;
+    let html = "";
+
+    // Prev
+    html += `<button class="page-btn" onclick="goPage(${p-1})" ${p===0?"disabled":""}>← Prev</button>`;
+
+    // Page numbers (smart windowing)
+    const start = Math.max(0, p - 2);
+    const end   = Math.min(totalPages - 1, p + 2);
+
+    if (start > 0) {
+      html += `<button class="page-btn" onclick="goPage(0)">1</button>`;
+      if (start > 1) html += `<span class="page-info">…</span>`;
+    }
+
+    for (let i = start; i <= end; i++) {
+      html += `<button class="page-btn ${i===p?"active":""}" onclick="goPage(${i})">${i+1}</button>`;
+    }
+
+    if (end < totalPages - 1) {
+      if (end < totalPages - 2) html += `<span class="page-info">…</span>`;
+      html += `<button class="page-btn" onclick="goPage(${totalPages-1})">${totalPages}</button>`;
+    }
+
+    // Next
+    html += `<button class="page-btn" onclick="goPage(${p+1})" ${p===totalPages-1?"disabled":""}>Next →</button>`;
+    html += `<span class="page-info">${p*PAGE_SIZE+1}–${Math.min((p+1)*PAGE_SIZE, totalCount)} of ${totalCount.toLocaleString()}</span>`;
+
+    els.pagination.innerHTML = html;
+  }
+
+  function goPage(page) {
+    currentPage = page;
+    loadShipments();
+    window.scrollTo({ top: document.querySelector(".table-card").offsetTop - 20, behavior: "smooth" });
+  }
+
+  // ── Render rows ────────────────────────────────────────
+  function showPlaceholder() {
+    els.tableBody.innerHTML = `
+      <tr><td colspan="18" class="state-cell">
+        <div class="state-content">
+          <div class="state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l4 4"/></svg></div>
+          <div class="state-title">No search yet</div>
+          <div class="state-sub">Apply filters above and click <strong>Search</strong> to load shipments</div>
+        </div>
+      </td></tr>`;
+    els.pagination.style.display = "none";
+  }
+
+  function renderRows(rows) {
+    currentRows = rows;
+    updateKPIs(rows);
+
+    if (!rows.length) {
+      els.tableBody.innerHTML = `
+        <tr><td colspan="18" class="state-cell">
+          <div class="state-content">
+            <div class="state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></div>
+            <div class="state-title">No shipments found</div>
+            <div class="state-sub">Try adjusting your filter criteria</div>
+          </div>
+        </td></tr>`;
+      els.pagination.style.display = "none";
+      els.exportBtn.disabled = true;
+      return;
+    }
+
+    els.exportBtn.disabled = false;
+
+    els.tableBody.innerHTML = rows.map(r => `
+      <tr>
+        <td class="id-cell">${esc(r[F.shipmentId])}</td>
+        <td class="id-cell">${esc(r[F.consolid])}</td>
+        <td>${esc(r[F.inco]) || "—"}</td>
+        <td>${esc(r[F.origin]) || "—"}</td>
+        <td>${esc(r[F.destination]) || "—"}</td>
+        <td>${countryCell(r[F.origCountryCode])}</td>
+        <td>${countryCell(r[F.destCountryCode])}</td>
+        <td>${transportBadge(r[F.transport])}</td>
+        <td>${esc(r[F.packingMode]) || "—"}</td>
+        <td>${esc(r[F.consignor]) || "—"}</td>
+        <td>${esc(r[F.consignee]) || "—"}</td>
+        <td>${datePill(r[F.etd])}</td>
+        <td>${datePill(r[F.eta])}</td>
+        <td>${datePill(r[F.onBoardDate])}</td>
+        <td class="num">${fmt(r[F.chargeable], r[F.chargeableUnits])}</td>
+        <td class="num">${fmt(r[F.volume], r[F.volumeUnits])}</td>
+        <td class="num">${fmt(r[F.containerCount])}</td>
+        <td class="num">${fmt(r[F.teuSum])}</td>
+      </tr>
+    `).join("");
+
+    renderPagination();
+  }
+
+  // ── Build query filters (shared) ───────────────────────
+  function applyFilters(query, v) {
+    if (v.shipmentId)  query = query.ilike(F.shipmentId,      `%${v.shipmentId}%`);
+    if (v.consolid)    query = query.ilike(F.consolid,        `%${v.consolid}%`);
+    if (v.origin)      query = query.ilike(F.origin,          `%${v.origin}%`);
+    if (v.destination) query = query.ilike(F.destination,     `%${v.destination}%`);
+    if (v.origCountry) query = query.ilike(F.origCountryCode, `%${v.origCountry}%`);
+    if (v.destCountry) query = query.ilike(F.destCountryCode, `%${v.destCountry}%`);
+    if (v.transport)   query = query.eq(F.transport, v.transport);
+    if (v.consignee)   query = query.ilike(F.consignee,       `%${v.consignee}%`);
+    if (v.consignor)   query = query.ilike(F.consignor,       `%${v.consignor}%`);
+    if (v.obDateFrom)  query = query.gte(F.onBoardDate, v.obDateFrom);
+    if (v.obDateTo)    query = query.lte(F.onBoardDate, v.obDateTo);
+    if (v.etdFrom)     query = query.gte(F.etd, v.etdFrom);
+    if (v.etdTo)       query = query.lte(F.etd, v.etdTo);
+    if (v.etaFrom)     query = query.gte(F.eta, v.etaFrom);
+    if (v.etaTo)       query = query.lte(F.eta, v.etaTo);
+    return query;
+  }
+
+  function getFilterValues() {
+    return {
+      shipmentId:  els.shipmentId.value.trim(),
+      consolid:    els.consolid.value.trim(),
+      origin:      els.origin.value.trim(),
+      destination: els.destination.value.trim(),
+      origCountry: els.origCountry.value.trim().toUpperCase(),
+      destCountry: els.destCountry.value.trim().toUpperCase(),
+      transport:   els.transport.value.trim(),
+      consignee:   els.consignee.value.trim(),
+      consignor:   els.consignor.value.trim(),
+      obDateFrom:  els.obDateFrom.value,
+      obDateTo:    els.obDateTo.value,
+      etdFrom:     els.etdFrom.value,
+      etdTo:       els.etdTo.value,
+      etaFrom:     els.etaFrom.value,
+      etaTo:       els.etaTo.value,
+    };
+  }
+
+  // ── Main search ────────────────────────────────────────
+  async function loadShipments() {
+    const v = getFilterValues();
+
+    els.searchBtn.disabled = true;
+    setStatus("Searching…", "idle");
+    els.tableBody.innerHTML = `<tr><td colspan="18" class="state-cell">
+      <div class="state-content">
+        <div class="state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg></div>
+        <div class="state-title">Loading…</div>
+      </div>
+    </td></tr>`;
+    els.pagination.style.display = "none";
+
+    // 1. Count total matching rows (for pagination)
+    let countQ = applyFilters(
+      db.from(TABLE_NAME).select("*", { count: "exact", head: true }),
+      v
+    );
+    const { count, error: countErr } = await countQ;
+    if (countErr) { handleError(countErr); return; }
+    totalCount = count ?? 0;
+
+    // 2. Fetch current page
+    const from = currentPage * PAGE_SIZE;
+    const to   = from + PAGE_SIZE - 1;
+
+    let dataQ = applyFilters(
+      db.from(TABLE_NAME).select(`
+        ${F.shipmentId}, ${F.consolid}, ${F.inco},
+        ${F.origin}, ${F.destination},
+        ${F.origCountryCode}, ${F.destCountryCode},
+        ${F.origCountryName}, ${F.destCountryName},
+        ${F.transport}, ${F.packingMode},
+        ${F.consignor}, ${F.consignee},
+        ${F.etd}, ${F.eta}, ${F.onBoardDate},
+        ${F.chargeable}, ${F.chargeableUnits},
+        ${F.volume}, ${F.volumeUnits},
+        ${F.containerCount}, ${F.teuSum}
+      `).order(sortCol, { ascending: sortAsc }).range(from, to),
+      v
+    );
+
+    const { data, error } = await dataQ;
+    els.searchBtn.disabled = false;
+
+    if (error) { handleError(error); return; }
+
+    const pageInfo = totalCount > PAGE_SIZE
+      ? ` (page ${currentPage+1} of ${Math.ceil(totalCount/PAGE_SIZE)})`
+      : "";
+    setStatus(`${totalCount.toLocaleString()} shipment${totalCount!==1?"s":""} found${pageInfo}`, "ok");
+    renderRows(data);
+  }
+
+  function handleError(error) {
+    els.searchBtn.disabled = false;
+    setStatus(`Error: ${error.message}`, "error");
+    els.tableBody.innerHTML = `<tr><td colspan="18" class="state-cell">
+      <div class="state-content">
+        <div class="state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div>
+        <div class="state-title">Query failed</div>
+        <div class="state-sub">${esc(error.message)}</div>
+      </div>
+    </td></tr>`;
+    resetKPIs();
+  }
+
+  // ── CSV Export ─────────────────────────────────────────
+  async function exportCSV() {
+    els.exportBtn.disabled = true;
+    setStatus("Preparing export…", "idle");
+
+    // Fetch ALL matching rows (no pagination limit) for export
+    const v = getFilterValues();
+    let q = applyFilters(
+      db.from(TABLE_NAME).select(`
+        ${F.shipmentId}, ${F.consolid}, ${F.inco},
+        ${F.origin}, ${F.destination},
+        ${F.origCountryCode}, ${F.destCountryCode},
+        ${F.transport}, ${F.packingMode},
+        ${F.consignor}, ${F.consignee},
+        ${F.etd}, ${F.eta}, ${F.onBoardDate},
+        ${F.chargeable}, ${F.chargeableUnits},
+        ${F.volume}, ${F.volumeUnits},
+        ${F.containerCount}, ${F.teuSum}
+      `).order(sortCol, { ascending: sortAsc }),
+      v
+    );
+
+    const { data, error } = await q;
+    els.exportBtn.disabled = false;
+
+    if (error) { setStatus(`Export failed: ${error.message}`, "error"); return; }
+
+    const headers = [
+      "Shipment ID","Consolid","Inco","Origin","Destination",
+      "Orig Country","Dest Country","Transport","Packing",
+      "Consignor","Consignee","ETD","ETA","On Board Date",
+      "Chargeable","Chargeable Units","Volume","Volume Units",
+      "Containers","TEU"
+    ];
+    const cols = [
+      F.shipmentId, F.consolid, F.inco, F.origin, F.destination,
+      F.origCountryCode, F.destCountryCode, F.transport, F.packingMode,
+      F.consignor, F.consignee, F.etd, F.eta, F.onBoardDate,
+      F.chargeable, F.chargeableUnits, F.volume, F.volumeUnits,
+      F.containerCount, F.teuSum
+    ];
+
+    const csvRows = [
+      headers.join(","),
+      ...data.map(r =>
+        cols.map(c => `"${String(r[c] ?? "").replace(/"/g,'""')}"`).join(",")
+      )
+    ];
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const a    = document.createElement("a");
+    a.href     = URL.createObjectURL(blob);
+    a.download = `shipments_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+
+    setStatus(`Exported ${data.length.toLocaleString()} rows to CSV`, "ok");
+  }
+
+  // ── Clear ──────────────────────────────────────────────
+  function clearFilters() {
+    ["shipmentId","consolid","origin","destination","origCountry","destCountry",
+     "consignee","consignor","obDateFrom","obDateTo","etdFrom","etdTo","etaFrom","etaTo"]
+      .forEach(k => { els[k].value = ""; });
+    els.transport.value = "";
+    currentPage = 0;
+    resetKPIs();
+    setStatus("Ready — apply filters and click Search", "idle");
+    showPlaceholder();
+    els.exportBtn.disabled = true;
+  }
+
+  // ── Event listeners ────────────────────────────────────
+  els.searchBtn.addEventListener("click", () => { currentPage = 0; loadShipments(); });
+  els.clearBtn.addEventListener("click", clearFilters);
+  els.exportBtn.addEventListener("click", exportCSV);
+
+  ["shipmentId","consolid","origin","destination","origCountry","destCountry","consignee","consignor"]
+    .forEach(k => {
+      els[k].addEventListener("keydown", e => {
+        if (e.key === "Enter") { currentPage = 0; loadShipments(); }
+      });
+    });
+
+  updateSortHeaders();
+</script>
+</body>
+</html>
