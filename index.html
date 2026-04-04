@@ -745,6 +745,121 @@
     .state-title { font-size: 15px; font-weight: 600; color: var(--grey-600); }
     .state-sub   { font-size: 13px; color: var(--text-muted); }
 
+    /* ── Tab Nav ── */
+    .tab-nav {
+      display: none; /* hidden on login page, shown on dashboard */
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border-bottom: 1.5px solid var(--blue-100);
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(30,42,56,0.06);
+    }
+
+    .tab-nav.visible { display: flex; }
+
+    .tab-nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--grey-800);
+      padding: 10px 0;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .tab-nav-brand-icon {
+      width: 28px; height: 28px;
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+
+    .tab-links {
+      display: flex;
+      align-items: stretch;
+      gap: 2px;
+      height: 100%;
+    }
+
+    .tab-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1.5px;
+      transition: color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+
+    .tab-link:hover { color: var(--blue-500); }
+
+    .tab-link.active {
+      color: var(--blue-600);
+      border-bottom-color: var(--blue-500);
+      font-weight: 600;
+    }
+
+    .tab-link svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .tab-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .tab-user-email {
+      font-size: 12px;
+      color: var(--text-muted);
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tab-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-400), var(--blue-600));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: #fff;
+      flex-shrink: 0;
+    }
+
+    .tab-logout {
+      display: inline-flex; align-items: center; gap: 5px;
+      height: 30px; padding: 0 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 500;
+      color: var(--grey-600);
+      cursor: pointer; transition: all .15s;
+    }
+
+    .tab-logout:hover { background: #fdeaea; border-color: #f5bcbc; color: #b02020; }
+    .tab-logout svg { width: 13px; height: 13px; }
+
+    /* hide old topnav — tab nav replaces it */
+    .topnav { display: none !important; }
+
+    /* dashboard page padding adjusted since nav is sticky */
+    #dashboardPage { padding-top: 20px !important; }
+
     /* ── Responsive ── */
     @media (max-width: 1024px) {
       .login-left { display: none; }
@@ -764,6 +879,36 @@
   </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════
+     SHARED TAB NAVIGATION
+══════════════════════════════════════════ -->
+<nav class="tab-nav" id="tabNav">
+  <a class="tab-nav-brand" href="index.html">
+    <div class="tab-nav-brand-icon">🚢</div>
+    ShipTrack
+  </a>
+
+  <div class="tab-links">
+    <a class="tab-link active" href="index.html" id="tabDash">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a class="tab-link" href="charts.html" id="tabCharts">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12l3-4 3 2 3-5 3 3"/><path d="M1 14h14"/></svg>
+      Analytics
+    </a>
+  </div>
+
+  <div class="tab-nav-right">
+    <span class="tab-user-email" id="tabUserEmail">—</span>
+    <div class="tab-avatar" id="tabAvatar">?</div>
+    <button class="tab-logout" id="tabLogoutBtn" type="button">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6"/></svg>
+      Sign out
+    </button>
+  </div>
+</nav>
 
 <!-- ══════════════════════════════════════════
      LOGIN PAGE
@@ -912,7 +1057,7 @@
       Live Dashboard
     </div>
     <h1>Shipment <span>Dashboard</span></h1>
-    <p class="header-sub">Real-time shipment tracking</p>
+    <p class="header-sub">Real-time shipment tracking powered by Supabase</p>
   </div>
 
   <!-- KPI Bar -->
@@ -1028,9 +1173,8 @@
 ══════════════════════════════════════════ -->
 <script>
   /* ── CONFIG: replace these two values ── */
-  const SUPABASE_URL      = "https://gelhcmequzjvgzczfzxn.supabase.co";
+  const SUPABASE_URL      = "https://gelhcmequzjvgzczfzxn.supabase.co" ;
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlbGhjbWVxdXpqdmd6Y3pmenhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDI1NTEsImV4cCI6MjA4OTkxODU1MX0.Iz0Yk7Eel_xQbryFL4DyIyVQeodmT_kuDuWcLbK6Q7A";
-
   const db         = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const TABLE_NAME = "shipments";
   const PAGE_SIZE  = 50;
@@ -1047,16 +1191,22 @@
   function showLogin() {
     document.getElementById("loginPage").style.display = "flex";
     document.getElementById("dashboardPage").classList.remove("visible");
+    document.getElementById("tabNav").classList.remove("visible");
     document.getElementById("loginEmail").focus();
   }
 
   function showDashboard(user) {
     document.getElementById("loginPage").style.display = "none";
     document.getElementById("dashboardPage").classList.add("visible");
-    // populate nav bar
+    // show tab nav
+    const nav = document.getElementById("tabNav");
+    nav.classList.add("visible");
+    // populate both old nav and tab nav user info
     const email = user.email || "";
     document.getElementById("navUserEmail").textContent = email;
     document.getElementById("navUserAvatar").textContent = email.charAt(0).toUpperCase();
+    document.getElementById("tabUserEmail").textContent = email;
+    document.getElementById("tabAvatar").textContent = email.charAt(0).toUpperCase();
   }
 
   // Sign in
@@ -1100,12 +1250,14 @@
     if (e.key === "Enter") document.getElementById("loginPassword").focus();
   });
 
-  // Sign out
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
+  // Sign out (both buttons)
+  async function doSignOut() {
     await db.auth.signOut();
     showLogin();
     clearFilters();
-  });
+  }
+  document.getElementById("logoutBtn").addEventListener("click", doSignOut);
+  document.getElementById("tabLogoutBtn").addEventListener("click", doSignOut);
 
   // Show/hide password toggle
   document.getElementById("pwToggle").addEventListener("click", () => {
