@@ -590,6 +590,14 @@
         <option value="">All Statuses</option>
       </select>
     </div>
+    <div class="fg grow">
+      <div class="fl">Consignor</div>
+      <input type="text" id="fConsignor" placeholder="Search consignor…"/>
+    </div>
+    <div class="fg grow">
+      <div class="fl">Consignee</div>
+      <input type="text" id="fConsignee" placeholder="Search consignee…"/>
+    </div>
     <div class="fg">
       <div class="fl">ETD From</div>
       <input type="date" id="fEtdFrom"/>
@@ -887,20 +895,24 @@ function renderRows(rows) {
 /* ══ FILTERS ══ */
 function getFilters() {
   return {
-    id:    document.getElementById("fShipmentId").value.trim(),
-    mode:  document.getElementById("fMode").value,
-    status:document.getElementById("fStatus").value,
-    etdFrom:document.getElementById("fEtdFrom").value,
-    etdTo:  document.getElementById("fEtdTo").value,
+    id:       document.getElementById("fShipmentId").value.trim(),
+    mode:     document.getElementById("fMode").value,
+    status:   document.getElementById("fStatus").value,
+    consignor:document.getElementById("fConsignor").value.trim(),
+    consignee:document.getElementById("fConsignee").value.trim(),
+    etdFrom:  document.getElementById("fEtdFrom").value,
+    etdTo:    document.getElementById("fEtdTo").value,
   };
 }
 
 function applyFilters(query, v) {
-  if(v.id)      query=query.ilike(F.id,`%${v.id}%`);
-  if(v.mode)    query=query.eq(F.mode,v.mode);
-  if(v.status)  query=query.eq(F.status,v.status);
-  if(v.etdFrom) query=query.gte(F.etd,v.etdFrom);
-  if(v.etdTo)   query=query.lte(F.etd,v.etdTo);
+  if(v.id)        query=query.ilike(F.id,       `%${v.id}%`);
+  if(v.mode)      query=query.eq(F.mode,         v.mode);
+  if(v.status)    query=query.eq(F.status,        v.status);
+  if(v.consignor) query=query.ilike(F.consignor, `%${v.consignor}%`);
+  if(v.consignee) query=query.ilike(F.consignee, `%${v.consignee}%`);
+  if(v.etdFrom)   query=query.gte(F.etd,          v.etdFrom);
+  if(v.etdTo)     query=query.lte(F.etd,          v.etdTo);
   return query;
 }
 
@@ -972,13 +984,15 @@ async function exportCSV() {
 /* ══ EVENTS ══ */
 document.getElementById("searchBtn").addEventListener("click",()=>{currentPage=0;loadShipments();});
 document.getElementById("clearBtn").addEventListener("click",()=>{
-  ["fShipmentId"].forEach(id=>{document.getElementById(id).value="";});
+  ["fShipmentId","fConsignor","fConsignee"].forEach(id=>{document.getElementById(id).value="";});
   ["fMode","fStatus"].forEach(id=>{document.getElementById(id).value="";});
   ["fEtdFrom","fEtdTo"].forEach(id=>{document.getElementById(id).value="";});
   currentPage=0; loadShipments();
 });
 document.getElementById("exportBtn").addEventListener("click",exportCSV);
-document.getElementById("fShipmentId").addEventListener("keydown",e=>{if(e.key==="Enter"){currentPage=0;loadShipments();}});
+["fShipmentId","fConsignor","fConsignee"].forEach(id=>{
+  document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter"){currentPage=0;loadShipments();}});
+});
 
 updateSortHeaders();
 checkSession();
