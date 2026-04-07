@@ -661,6 +661,14 @@
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--grey-200); flex-shrink: 0; }
     .status-dot.active { background: #3db37a; }
     .status-dot.error  { background: #e05c5c; }
+
+    /* Status badges for jobshipment */
+    .status-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
+    .s-completed  {background:#e8f5ee;color:#1f7a42;}
+    .s-pending    {background:#fef7e8;color:#a06010;}
+    .s-inprogress {background:#e8f1fb;color:#1a5a9a;}
+    .s-cancelled  {background:#fdeaea;color:#b02020;}
+    .s-default    {background:var(--grey-100);color:var(--grey-600);}
     .table-actions { display: flex; align-items: center; gap: 10px; }
 
     /* ── Table ── */
@@ -1130,24 +1138,24 @@
       <table>
         <thead>
           <tr>
-            <th class="sortable" data-col="shipmentid"            onclick="setSort('shipmentid')">Shipment ID <span class="sort-indicator">▲▼</span></th>
-            <th class="sortable" data-col="consolid"               onclick="setSort('consolid')">Consolid <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="shipmentid"    onclick="setSort('shipmentid')">Shipment ID <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="consolid"       onclick="setSort('consolid')">Consolid <span class="sort-indicator">▲▼</span></th>
             <th>Inco</th>
-            <th class="sortable" data-col="origunloconame"        onclick="setSort('origunloconame')">Origin <span class="sort-indicator">▲▼</span></th>
-            <th class="sortable" data-col="destunloconame"        onclick="setSort('destunloconame')">Destination <span class="sort-indicator">▲▼</span></th>
-            <th>Orig. Country</th>
-            <th>Dest. Country</th>
-            <th class="sortable" data-col="shipmenttransportmode" onclick="setSort('shipmenttransportmode')">Transport <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="origcountry"   onclick="setSort('origcountry')">Origin <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="destcountry"   onclick="setSort('destcountry')">Destination <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="transportmode" onclick="setSort('transportmode')">Transport <span class="sort-indicator">▲▼</span></th>
             <th>Packing</th>
             <th>Consignor</th>
             <th>Consignee</th>
-            <th class="sortable" data-col="shipmentetd"           onclick="setSort('shipmentetd')">ETD <span class="sort-indicator">▲▼</span></th>
-            <th class="sortable" data-col="shipmenteta"           onclick="setSort('shipmenteta')">ETA <span class="sort-indicator">▲▼</span></th>
-            <th class="sortable" data-col="shippedonboarddate"    onclick="setSort('shippedonboarddate')">On Board <span class="sort-indicator">▲▼</span></th>
-            <th class="num sortable" data-col="actualchargeable"  onclick="setSort('actualchargeable')">Chargeable <span class="sort-indicator">▲▼</span></th>
-            <th class="num sortable" data-col="actualvolume"      onclick="setSort('actualvolume')">Volume <span class="sort-indicator">▲▼</span></th>
-            <th class="num sortable" data-col="containercount"    onclick="setSort('containercount')">Containers <span class="sort-indicator">▲▼</span></th>
-            <th class="num sortable" data-col="teusum"            onclick="setSort('teusum')">TEU <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="etd"           onclick="setSort('etd')">ETD <span class="sort-indicator">▲▼</span></th>
+            <th class="sortable" data-col="eta"           onclick="setSort('eta')">ETA <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="chargeableweight" onclick="setSort('chargeableweight')">Chargeable <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="volume"    onclick="setSort('volume')">Volume <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="teu"       onclick="setSort('teu')">TEU <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="revenue"   onclick="setSort('revenue')">Revenue <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="cost"      onclick="setSort('cost')">Cost <span class="sort-indicator">▲▼</span></th>
+            <th class="num sortable" data-col="profit"    onclick="setSort('profit')">Profit <span class="sort-indicator">▲▼</span></th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody id="tableBody">
@@ -1176,7 +1184,7 @@
   const SUPABASE_URL      = "https://gelhcmequzjvgzczfzxn.supabase.co" ;
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlbGhjbWVxdXpqdmd6Y3pmenhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDI1NTEsImV4cCI6MjA4OTkxODU1MX0.Iz0Yk7Eel_xQbryFL4DyIyVQeodmT_kuDuWcLbK6Q7A";
   const db         = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const TABLE_NAME = "shipments";
+  const TABLE_NAME = "jobshipment";
   const PAGE_SIZE  = 50;
 
   /* ══════════════════════════════════════
@@ -1346,15 +1354,17 @@
   ══════════════════════════════════════ */
   const F = {
     shipmentId: "shipmentid", consolid: "consolid", inco: "inco",
-    origin: "origunloconame", destination: "destunloconame",
-    origCountryCode: "origcountrycode", destCountryCode: "destcountrycode",
-    origCountryName: "origcountryname", destCountryName: "destcountryname",
-    transport: "shipmenttransportmode", packingMode: "packingmode",
-    consignee: "consigneefullname", consignor: "consignorfullname",
-    etd: "shipmentetd", eta: "shipmenteta", onBoardDate: "shippedonboarddate",
-    chargeable: "actualchargeable", chargeableUnits: "actualchargeableunits",
-    volume: "actualvolume", volumeUnits: "unitofvolume",
-    containerCount: "containercount", teuSum: "teusum"
+    origin: "origcountry", destination: "destcountry",
+    origCountryCode: "origcountry", destCountryCode: "destcountry",
+    origCountryName: "origcountry", destCountryName: "destcountry",
+    transport: "transportmode", packingMode: "packingmode",
+    consignee: "consignee", consignor: "consignor",
+    etd: "etd", eta: "eta", onBoardDate: "etd",
+    chargeable: "chargeableweight", chargeableUnits: null,
+    volume: "volume", volumeUnits: null,
+    containerCount: "teu", teuSum: "teu",
+    revenue: "revenue", cost: "cost", profit: "profit",
+    status: "status",
   };
 
   let currentRows = [], currentPage = 0, totalCount = 0;
@@ -1392,7 +1402,7 @@
   };
 
   function esc(v) { return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
-  function fmt(value, unit) { if (value==null||value==="") return "—"; const n=Number(value).toLocaleString(); return unit?`${n} ${unit}`:n; }
+  function fmt(value, unit) { if (value==null||value==="") return "—"; const n=Number(value).toLocaleString(); return (unit&&unit!=="null")?`${n} ${unit}`:n; }
   function datePill(val) { if (!val) return "—"; return `<span class="date-pill">${esc(val)}</span>`; }
   function transportBadge(val) { if (!val) return "—"; const v=val.toUpperCase(); const cls=v==="SEA"?"badge-sea":v==="AIR"?"badge-air":v==="ROAD"?"badge-road":"badge-def"; const icon=v==="SEA"?"🚢":v==="AIR"?"✈️":v==="ROAD"?"🚛":"📦"; return `<span class="badge ${cls}">${icon} ${esc(val)}</span>`; }
   function countryCell(code) { if (!code) return "—"; return `<span class="cc-code">${esc(code).toUpperCase()}</span>`; }
@@ -1449,26 +1459,30 @@
       els.pagination.style.display="none"; els.exportBtn.disabled=true; return;
     }
     els.exportBtn.disabled=false;
-    els.tableBody.innerHTML=rows.map(r=>`<tr>
-      <td class="id-cell">${esc(r[F.shipmentId])}</td>
-      <td class="id-cell">${esc(r[F.consolid])}</td>
-      <td>${esc(r[F.inco])||"—"}</td>
-      <td>${esc(r[F.origin])||"—"}</td>
-      <td>${esc(r[F.destination])||"—"}</td>
-      <td>${countryCell(r[F.origCountryCode])}</td>
-      <td>${countryCell(r[F.destCountryCode])}</td>
-      <td>${transportBadge(r[F.transport])}</td>
-      <td>${esc(r[F.packingMode])||"—"}</td>
-      <td>${esc(r[F.consignor])||"—"}</td>
-      <td>${esc(r[F.consignee])||"—"}</td>
-      <td>${datePill(r[F.etd])}</td>
-      <td>${datePill(r[F.eta])}</td>
-      <td>${datePill(r[F.onBoardDate])}</td>
-      <td class="num">${fmt(r[F.chargeable],r[F.chargeableUnits])}</td>
-      <td class="num">${fmt(r[F.volume],r[F.volumeUnits])}</td>
-      <td class="num">${fmt(r[F.containerCount])}</td>
-      <td class="num">${fmt(r[F.teuSum])}</td>
-    </tr>`).join("");
+    els.tableBody.innerHTML=rows.map(r=>{
+      const st=(r[F.status]||"").toLowerCase().replace(/\s+/g,"-");
+      const stCls=st.includes("complet")?"s-completed":st.includes("pending")?"s-pending":st.includes("progress")?"s-inprogress":st.includes("cancel")?"s-cancelled":"s-default";
+      return `<tr>
+        <td class="id-cell">${esc(r[F.shipmentId])}</td>
+        <td class="id-cell">${esc(r[F.consolid])}</td>
+        <td>${esc(r[F.inco])||"—"}</td>
+        <td>${esc(r[F.origin])||"—"}</td>
+        <td>${esc(r[F.destination])||"—"}</td>
+        <td>${transportBadge(r[F.transport])}</td>
+        <td>${esc(r[F.packingMode])||"—"}</td>
+        <td>${esc(r[F.consignor])||"—"}</td>
+        <td>${esc(r[F.consignee])||"—"}</td>
+        <td>${datePill(r[F.etd])}</td>
+        <td>${datePill(r[F.eta])}</td>
+        <td class="num">${fmt(r[F.chargeable])}</td>
+        <td class="num">${fmt(r[F.volume])}</td>
+        <td class="num">${fmt(r[F.containerCount])}</td>
+        <td class="num">${fmt(r[F.revenue])}</td>
+        <td class="num">${fmt(r[F.cost])}</td>
+        <td class="num" style="${Number(r[F.profit])>=0?"color:#1f7a42":"color:#b02020"};font-weight:600">${fmt(r[F.profit])}</td>
+        <td><span class="status-badge ${stCls}">${esc(r[F.status])||"—"}</span></td>
+      </tr>`;
+    }).join("");
     renderPagination();
   }
 
@@ -1516,7 +1530,7 @@
     totalCount=count??0;
 
     const from=currentPage*PAGE_SIZE, to=from+PAGE_SIZE-1;
-    let dataQ=applyFilters(db.from(TABLE_NAME).select(`${F.shipmentId},${F.consolid},${F.inco},${F.origin},${F.destination},${F.origCountryCode},${F.destCountryCode},${F.origCountryName},${F.destCountryName},${F.transport},${F.packingMode},${F.consignor},${F.consignee},${F.etd},${F.eta},${F.onBoardDate},${F.chargeable},${F.chargeableUnits},${F.volume},${F.volumeUnits},${F.containerCount},${F.teuSum}`).order(sortCol,{ascending:sortAsc}).range(from,to),v);
+    let dataQ=applyFilters(db.from(TABLE_NAME).select(`${F.shipmentId},${F.consolid},${F.inco},${F.origin},${F.destination},${F.origCountryCode},${F.destCountryCode},${F.transport},${F.packingMode},${F.consignor},${F.consignee},${F.etd},${F.eta},${F.chargeable},${F.volume},${F.containerCount},${F.revenue},${F.cost},${F.profit},${F.status}`).order(sortCol,{ascending:sortAsc}).range(from,to),v);
     const {data,error}=await dataQ;
     els.searchBtn.disabled=false;
     if(error){handleError(error);return;}
@@ -1534,7 +1548,7 @@
   async function exportCSV() {
     els.exportBtn.disabled=true; setStatus("Preparing export…","idle");
     const v=getFilterValues();
-    let q=applyFilters(db.from(TABLE_NAME).select(`${F.shipmentId},${F.consolid},${F.inco},${F.origin},${F.destination},${F.origCountryCode},${F.destCountryCode},${F.transport},${F.packingMode},${F.consignor},${F.consignee},${F.etd},${F.eta},${F.onBoardDate},${F.chargeable},${F.chargeableUnits},${F.volume},${F.volumeUnits},${F.containerCount},${F.teuSum}`).order(sortCol,{ascending:sortAsc}),v);
+    let q=applyFilters(db.from(TABLE_NAME).select(`${F.shipmentId},${F.consolid},${F.inco},${F.origin},${F.destination},${F.origCountryCode},${F.destCountryCode},${F.transport},${F.packingMode},${F.consignor},${F.consignee},${F.etd},${F.eta},${F.chargeable},${F.volume},${F.containerCount},${F.revenue},${F.cost},${F.profit},${F.status}`).order(sortCol,{ascending:sortAsc}),v);
     const {data,error}=await q;
     els.exportBtn.disabled=false;
     if(error){setStatus(`Export failed: ${error.message}`,"error");return;}
